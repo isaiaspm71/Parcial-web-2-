@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MEDIC - Sistema de Gestión de Clínica</title>
+<style>
+  /* ===== CSS: el diseño (colores, tarjetas, botones) ===== */
+  :root { --verde: #1f9d55; --oscuro: #0f5132; --claro: #e6f6ec; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: linear-gradient(160deg, #eaf7ef, #f7fcf9); min-height: 100vh; }
+
+  header { background: linear-gradient(135deg, var(--oscuro), var(--verde)); color: white; padding: 18px 24px 0; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .cruz { background: white; color: var(--verde); width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+  .logo h1 { margin: 0; letter-spacing: 4px; font-size: 28px; }
+  .logo small { opacity: .85; }
+
+  nav { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 4px; }
+  nav button { padding: 10px 16px; border: 0; background: rgba(255,255,255,.15); color: white; cursor: pointer; border-radius: 10px 10px 0 0; font-size: 15px; transition: .2s; }
+  nav button:hover { background: rgba(255,255,255,.3); }
+  nav button.activo { background: #f7fcf9; color: var(--oscuro); font-weight: bold; }
+
+  main { padding: 22px; max-width: 980px; margin: auto; }
+  section { display: none; background: white; padding: 20px; border-radius: 14px; box-shadow: 0 4px 16px rgba(31,157,85,.15); border-top: 5px solid var(--verde); }
+  section.visible { display: block; animation: aparecer .4s; }
+  @keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  h3 { color: var(--oscuro); margin-top: 0; }
+
+  form { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; background: var(--claro); padding: 14px; border-radius: 10px; }
+  input, select, textarea { padding: 9px; border: 1px solid #b7dfc7; border-radius: 8px; font-size: 14px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--verde); }
+  .guardar { background: var(--verde); color: white; border: 0; padding: 9px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: .2s; }
+  .guardar:hover { background: var(--oscuro); transform: scale(1.04); }
+
+  table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 10px; }
+  th { background: var(--verde); color: white; padding: 10px; text-align: left; }
+  td { padding: 9px 10px; border-bottom: 1px solid #e3efe7; }
+  tbody tr:nth-child(even) { background: #f3fbf6; }
+  tbody tr:hover { background: #d8f1e2; }
+  td button { border: 0; padding: 6px 10px; border-radius: 6px; cursor: pointer; background: #fde2e2; }
+  td button:hover { background: #f8b4b4; }
+
+  /* Tarjetas de la pantalla de inicio */
+  .tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-top: 14px; }
+  .tarjeta { background: linear-gradient(135deg, var(--claro), white); border: 1px solid #b7dfc7; border-radius: 14px; padding: 18px; text-align: center; transition: .2s; }
+  .tarjeta:hover { transform: translateY(-4px); box-shadow: 0 6px 14px rgba(31,157,85,.25); }
+  .tarjeta span { font-size: 34px; display: block; }
+  .tarjeta b { font-size: 30px; color: var(--verde); display: block; }
+
+  #recibo { display: none; }
+  @media print {
+    header, main { display: none; }
+    #recibo { display: block; padding: 30px; font-size: 18px; border: 3px solid var(--verde); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HTML: la estructura de la página ===== -->
+<header>
+  <div class="logo">
+    <div class="cruz">+</div>
+    <div><h1>MEDIC</h1><small>Sistema de Gestión de Clínica</small></div>
+  </div>
+  <nav>
+    <button data-sec="inicio" class="activo">🏠 Inicio</button>
+    <button data-sec="pacientes">🧑 Pacientes</button>
+    <button data-sec="medicos">🩺 Médicos</button>
+    <button data-sec="citas">📅 Citas</button>
+    <button data-sec="historial">📋 Historial</button>
+    <button data-sec="recetas">💊 Recetas</button>
+  </nav>
+</header>
+
+<main>
+  <!-- INICIO: resumen con contadores -->
+  <section id="inicio" class="visible">
+    <h3>Bienvenido a MEDIC</h3>
+    <p>Gestiona pacientes, médicos, citas, historiales y recetas desde un solo lugar.</p>
+    <div class="tarjetas" id="resumen"></div>
+  </section>
+
+  <section id="pacientes">
+    <h3>🧑 Pacientes</h3>
+    <form onsubmit="enviar(event,'pacientes')">
+      <input name="nombre" placeholder="Nombre completo" required>
+      <input name="cedula" placeholder="Cédula" required>
+      <input name="edad" type="number" placeholder="Edad" required>
+      <input name="telefono" placeholder="Teléfono">
+      <button class="guardar">Guardar</button>
+    </form>
+    <table><thead><tr><th>Nombre</th><th>Cédula</th><th>Edad</th><th>Teléfono</th><th></th></tr></thead>
+    <tbody id="tPacientes"></tbody></table>
+  </section>
+
+  <section id="medicos">
+    <h3>🩺 Médicos</h3>
+    <form onsubmit="enviar(event,'medicos')">
+      <input name="nombre" placeholder="Nombre del médico" required>
+      <input name="especialidad" placeholder="Especialidad" required>
+      <button class="guardar">Guardar</button>
+    </form>
+    <table><thead><tr><th>Nombre</th><th>Especialidad</th><th></th></tr></thead>
+    <tbody id="tMedicos"></tbody></table>
+  </section>
+
+  <section id="citas">
+    <h3>📅 Citas</h3>
+    <form onsubmit="enviar(event,'citas')">
+      <select name="paciente" class="selPac" required></select>
+      <select name="medico" class="selMed" required></select>
+      <input name="fecha" type="datetime-local" required>
+      <input name="motivo" placeholder="Motivo">
+      <button class="guardar">Agendar</button>
+    </form>
+    <table><thead><tr><th>Fecha</th><th>Paciente</th><th>Médico</th><th>Motivo</th><th></th></tr></thead>
+    <tbody id="tCitas"></tbody></table>
+  </section>
+
+  <section id="historial">
+    <h3>📋 Historial del paciente</h3>
+    <form onsubmit="enviar(event,'historial')">
+      <select name="paciente" class="selPac" required></select>
+      <input name="fecha" type="date" required>
+      <textarea name="nota" placeholder="Diagnóstico / notas" required></textarea>
+      <button class="guardar">Agregar al historial</button>
+    </form>
+    <p>Ver historial de: <select id="filtroHist" class="selPac" onchange="render()"></select></p>
+    <table><thead><tr><th>Fecha</th><th>Paciente</th><th>Nota</th><th></th></tr></thead>
+    <tbody id="tHistorial"></tbody></table>
+  </section>
+
+  <section id="recetas">
+    <h3>💊 Recetas</h3>
+    <form onsubmit="enviar(event,'recetas')">
+      <select name="paciente" class="selPac" required></select>
+      <select name="medico" class="selMed" required></select>
+      <input name="medicamento" placeholder="Medicamento y dosis" required>
+      <textarea name="indicaciones" placeholder="Indicaciones"></textarea>
+      <button class="guardar">Crear receta</button>
+    </form>
+    <table><thead><tr><th>Fecha</th><th>Paciente</th><th>Médico</th><th>Medicamento</th><th></th></tr></thead>
+    <tbody id="tRecetas"></tbody></table>
+  </section>
+</main>
+
+<!-- Esto solo se ve al imprimir una receta -->
+<div id="recibo"></div>
+
+<script>
+/* ===== JavaScript: la lógica del programa ===== */
+
+// 1) Base de datos: se guarda en el navegador (localStorage)
+const db = JSON.parse(localStorage.getItem('medic')) ||
+  { pacientes: [], medicos: [], citas: [], historial: [], recetas: [] };
+
+// 2) Guardar los datos y redibujar la pantalla
+function guardar() {
+  localStorage.setItem('medic', JSON.stringify(db));
+  render();
+}
+
+// 3) Agregar un registro con un id único
+function agregar(tabla, datos) {
+  db[tabla].push({ id: Date.now(), ...datos });
+  guardar();
+}
+
+// 4) Borrar un registro por su id
+function borrar(tabla, id) {
+  db[tabla] = db[tabla].filter(x => x.id != id);
+  guardar();
+}
+
+// 5) Se ejecuta al enviar cualquier formulario
+function enviar(e, tabla) {
+  e.preventDefault();
+  const datos = Object.fromEntries(new FormData(e.target));
+  if (tabla === 'recetas') datos.fecha = new Date().toLocaleDateString();
+  agregar(tabla, datos);
+  e.target.reset();
+}
+
+// 6) Convierte un id en nombre (para mostrar paciente/médico)
+const nombre = (tabla, id) => (db[tabla].find(x => x.id == id) || {}).nombre || '(eliminado)';
+const btnBorrar = (tabla, id) => `<button onclick="borrar('${tabla}',${id})">Eliminar</button>`;
+
+// 7) Dibujar listas desplegables, tablas y tarjetas de resumen
+function render() {
+  document.querySelectorAll('.selPac').forEach(s => {
+    const actual = s.value;
+    s.innerHTML = (s.id === 'filtroHist' ? '<option value="">-- Todos --</option>' : '<option value="">Paciente...</option>') +
+      db.pacientes.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+    s.value = actual;
+  });
+  document.querySelectorAll('.selMed').forEach(s => {
+    const actual = s.value;
+    s.innerHTML = '<option value="">Médico...</option>' +
+      db.medicos.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+    s.value = actual;
+  });
+
+  resumen.innerHTML = [['🧑','Pacientes',db.pacientes],['🩺','Médicos',db.medicos],['📅','Citas',db.citas],['📋','Historial',db.historial],['💊','Recetas',db.recetas]]
+    .map(([i, t, l]) => `<div class="tarjeta"><span>${i}</span><b>${l.length}</b>${t}</div>`).join('');
+
+  tPacientes.innerHTML = db.pacientes.map(p =>
+    `<tr><td>${p.nombre}</td><td>${p.cedula}</td><td>${p.edad}</td><td>${p.telefono}</td><td>${btnBorrar('pacientes', p.id)}</td></tr>`).join('');
+
+  tMedicos.innerHTML = db.medicos.map(m =>
+    `<tr><td>${m.nombre}</td><td>${m.especialidad}</td><td>${btnBorrar('medicos', m.id)}</td></tr>`).join('');
+
+  tCitas.innerHTML = db.citas.map(c =>
+    `<tr><td>${c.fecha.replace('T', ' ')}</td><td>${nombre('pacientes', c.paciente)}</td><td>${nombre('medicos', c.medico)}</td><td>${c.motivo}</td><td>${btnBorrar('citas', c.id)}</td></tr>`).join('');
+
+  const filtro = document.getElementById('filtroHist').value;
+  tHistorial.innerHTML = db.historial
+    .filter(h => !filtro || h.paciente == filtro)
+    .map(h => `<tr><td>${h.fecha}</td><td>${nombre('pacientes', h.paciente)}</td><td>${h.nota}</td><td>${btnBorrar('historial', h.id)}</td></tr>`).join('');
+
+  tRecetas.innerHTML = db.recetas.map(r =>
+    `<tr><td>${r.fecha}</td><td>${nombre('pacientes', r.paciente)}</td><td>${nombre('medicos', r.medico)}</td><td>${r.medicamento}</td>
+     <td><button onclick="imprimir(${r.id})">🖨 Imprimir</button> ${btnBorrar('recetas', r.id)}</td></tr>`).join('');
+}
+
+// 8) Imprimir receta
+function imprimir(id) {
+  const r = db.recetas.find(x => x.id == id);
+  document.getElementById('recibo').innerHTML = `
+    <h2 style="text-align:center;color:#1f9d55">✚ MEDIC - Receta Médica</h2><hr>
+    <p><b>Fecha:</b> ${r.fecha}</p>
+    <p><b>Paciente:</b> ${nombre('pacientes', r.paciente)}</p>
+    <p><b>Medicamento:</b> ${r.medicamento}</p>
+    <p><b>Indicaciones:</b> ${r.indicaciones || '-'}</p>
+    <br><br><p>_____________________________<br>Dr(a). ${nombre('medicos', r.medico)}</p>`;
+  window.print();
+}
+
+// 9) Menú: muestra solo la sección del botón presionado
+document.querySelectorAll('nav button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('section').forEach(s => s.classList.remove('visible'));
+    document.querySelectorAll('nav button').forEach(x => x.classList.remove('activo'));
+    document.getElementById(b.dataset.sec).classList.add('visible');
+    b.classList.add('activo');
+  };
+});
+
+render(); // dibujar todo al abrir la página
+</script>
+</body>
+</html>
